@@ -8,15 +8,35 @@ import './index.css'
 
 const Cart = () => {
   const data = useContext(CartContext)
-  const {cartList} = data
+  const {cartList, removeAllCartItems} = data
   const showEmptyCartView = cartList.length === 0
+  const onClickingRemoveAllBtn = () => {
+    removeAllCartItems()
+  }
+
+  const renderCartListView = () => {
+    return (
+      <>
+        <div className="my-cart-remove-all-container">
+          <h1 className="cart-heading">My Cart</h1>
+          <button
+            type="button"
+            className="remove-all-btn"
+            onClick={onClickingRemoveAllBtn}
+          >
+            Remove all
+          </button>
+        </div>
+        <CartListView />
+      </>
+    )
+  }
   return (
     <>
       <Header />
       <div className="cart-container">
         <div className="cart-content-container">
-          <h1 className="cart-heading">My Cart</h1>
-          {showEmptyCartView ? <EmptyCartView /> : <CartListView />}
+          {showEmptyCartView ? <EmptyCartView /> : renderCartListView()}
         </div>
       </div>
     </>

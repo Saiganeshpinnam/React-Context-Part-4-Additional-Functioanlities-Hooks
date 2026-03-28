@@ -38,6 +38,9 @@ const App = () => {
       ),
     )
   }
+  const removeAllCartItems = () => {
+    setCartList([])
+  }
   return (
     <BrowserRouter>
       <CartContext
@@ -47,6 +50,7 @@ const App = () => {
           deleteCartItem,
           incrementCartItemQuantity,
           decrementCartItemQuantity,
+          removeAllCartItems,
         }}
       >
         <Routes>
