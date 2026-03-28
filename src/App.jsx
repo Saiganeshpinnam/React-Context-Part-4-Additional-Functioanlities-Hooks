@@ -21,6 +21,23 @@ const App = () => {
   const deleteCartItem = id => {
     setCartList(cartList.filter(eachCartItem => eachCartItem.id != id))
   }
+  const incrementCartItemQuantity = id => {
+    setCartList(prevList =>
+      prevList.map(item =>
+        item.id === id ? {...item, quantity: item.quantity + 1} : item,
+      ),
+    )
+  }
+
+  const decrementCartItemQuantity = id => {
+    setCartList(prevList =>
+      prevList.map(item =>
+        item.id === id && item.quantity > 1
+          ? {...item, quantity: item.quantity - 1}
+          : item,
+      ),
+    )
+  }
   return (
     <BrowserRouter>
       <CartContext
@@ -28,6 +45,8 @@ const App = () => {
           cartList,
           addCartItem,
           deleteCartItem,
+          incrementCartItemQuantity,
+          decrementCartItemQuantity,
         }}
       >
         <Routes>

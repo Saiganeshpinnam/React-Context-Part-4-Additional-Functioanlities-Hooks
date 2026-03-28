@@ -8,11 +8,19 @@ import './index.css'
 const CartItem = props => {
   const {cartItemDetails} = props
   const {id, title, brand, quantity, price, imageUrl} = cartItemDetails
+
   const data = useContext(CartContext)
-  const {deleteCartItem} = data
+  const {deleteCartItem, incrementCartItemQuantity, decrementCartItemQuantity} =
+    data
 
   const onClickingDeleteBtn = () => {
     deleteCartItem(id)
+  }
+  const onClickingDash = () => {
+    decrementCartItemQuantity(id)
+  }
+  const onClickingPlus = () => {
+    incrementCartItemQuantity(id)
   }
 
   return (
@@ -24,11 +32,19 @@ const CartItem = props => {
           <p className="cart-product-brand">by {brand}</p>
         </div>
         <div className="cart-quantity-container">
-          <button type="button" className="quantity-controller-button">
+          <button
+            type="button"
+            className="quantity-controller-button"
+            onClick={onClickingDash}
+          >
             <BsDashSquare color="#52606D" size={12} />
           </button>
           <p className="cart-quantity">{quantity}</p>
-          <button type="button" className="quantity-controller-button">
+          <button
+            type="button"
+            className="quantity-controller-button"
+            onClick={onClickingPlus}
+          >
             <BsPlusSquare color="#52606D" size={12} />
           </button>
         </div>
