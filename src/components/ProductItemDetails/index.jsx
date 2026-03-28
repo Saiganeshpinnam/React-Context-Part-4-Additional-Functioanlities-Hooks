@@ -18,19 +18,51 @@ const apiStatusConstants = {
 }
 
 const ProductItemDetails = () => {
+  const {id} = useParams()
+
   const [apiResponse, setApiResponse] = useState({
     status: apiStatusConstants.initial,
     data: null,
     errorMsg: null,
   })
+
   const [quantity, setQuantity] = useState(1)
-  const {id} = useParams()
-  const value = use(CartContext)
-  const {addCartItem} = value
+
+  // ✅ Context
+  const {addCartItem, cartList, incrementCartItemQuantity} = use(CartContext)
+
+  // ✅ Clean extraction
+  const productDetails = apiResponse.data?.productDetails
+
+  // ✅ Find item in cart
+  const cartItem = productDetails
+    ? cartList.find(each => each.id === productDetails.id)
+    : null
+
+  // ✅ Sync quantity with cart
+  useEffect(() => {
+    if (cartItem) {
+      setQuantity(cartItem.quantity)
+    }
+  }, [cartItem])
+
+  // ✅ Add to cart logic
   const onClickAddToCart = () => {
-    const {data} = apiResponse
-    const {productDetails} = data
-    addCartItem({...productDetails, quantity})
+    if (!productDetails) return
+
+    if (cartItem) {
+      incrementCartItemQuantity(productDetails.id)
+    } else {
+      addCartItem({...productDetails, quantity})
+    }
+  }
+
+  const onDecrementQuantity = () => {
+    setQuantity(prev => (prev > 1 ? prev - 1 : prev))
+  }
+
+  const onIncrementQuantity = () => {
+    setQuantity(prev => prev + 1)
   }
 
   const getFormattedData = data => ({
@@ -52,49 +84,38 @@ const ProductItemDetails = () => {
         data: null,
         errorMsg: null,
       })
+
       const jwtToken = Cookies.get('jwt_token')
-      const apiUrl = `https://apis.ccbp.in/products/${id}`
-      const options = {
+
+      const response = await fetch(`https://apis.ccbp.in/products/${id}`, {
         headers: {
           Authorization: `Bearer ${jwtToken}`,
         },
-        method: 'GET',
-      }
+      })
 
-      const response = await fetch(apiUrl, options)
       if (response.ok) {
         const fetchedData = await response.json()
-        const formattedProductDetails = getFormattedData(fetchedData)
-        const formattedSimilarProductsData = fetchedData.similar_products.map(
-          eachSimilarProduct => getFormattedData(eachSimilarProduct),
-        )
-        setApiResponse(prevApiResponse => ({
-          ...prevApiResponse,
+
+        setApiResponse({
           status: apiStatusConstants.success,
           data: {
-            productDetails: formattedProductDetails,
-            similarProductsData: formattedSimilarProductsData,
+            productDetails: getFormattedData(fetchedData),
+            similarProductsData:
+              fetchedData.similar_products.map(getFormattedData),
           },
-        }))
+          errorMsg: null,
+        })
       } else {
-        setApiResponse(prevApiResponse => ({
-          ...prevApiResponse,
+        setApiResponse({
           status: apiStatusConstants.failure,
-        }))
+          data: null,
+          errorMsg: null,
+        })
       }
     }
+
     getProductData()
   }, [id])
-
-  const onDecrementQuantity = () => {
-    setQuantity(prevQuantity =>
-      prevQuantity > 1 ? prevQuantity - 1 : prevQuantity,
-    )
-  }
-
-  const onIncrementQuantity = () => {
-    setQuantity(prevQuantity => prevQuantity + 1)
-  }
 
   const renderLoadingView = () => (
     <div className="products-details-loader-container" data-testid="loader">
@@ -119,8 +140,8 @@ const ProductItemDetails = () => {
   )
 
   const renderProductDetailsView = () => {
-    const {data} = apiResponse
-    const {productDetails, similarProductsData} = data
+    const {productDetails, similarProductsData} = apiResponse.data
+
     const {
       availability,
       brand,
@@ -136,9 +157,12 @@ const ProductItemDetails = () => {
       <div className="product-details-success-view">
         <div className="product-details-container">
           <img src={imageUrl} alt="product" className="product-image" />
+
           <div className="product">
             <h1 className="product-name">{title}</h1>
+
             <p className="price-details">Rs {price}/-</p>
+
             <div className="rating-and-reviews-count">
               <div className="rating-container">
                 <p className="rating">{rating}</p>
@@ -150,16 +174,21 @@ const ProductItemDetails = () => {
               </div>
               <p className="reviews-count">{totalReviews} Reviews</p>
             </div>
+
             <p className="product-description">{description}</p>
+
             <div className="label-value-container">
               <p className="label">Available:</p>
               <p className="value">{availability}</p>
             </div>
+
             <div className="label-value-container">
               <p className="label">Brand:</p>
               <p className="value">{brand}</p>
             </div>
+
             <hr className="horizontal-line" />
+
             <div className="quantity-container">
               <button
                 type="button"
@@ -172,7 +201,9 @@ const ProductItemDetails = () => {
                   aria-label="minus"
                 />
               </button>
+
               <p className="quantity">{quantity}</p>
+
               <button
                 type="button"
                 className="quantity-controller-button"
@@ -185,6 +216,7 @@ const ProductItemDetails = () => {
                 />
               </button>
             </div>
+
             <button
               type="button"
               className="button add-to-cart-btn"
@@ -194,7 +226,9 @@ const ProductItemDetails = () => {
             </button>
           </div>
         </div>
+
         <h1 className="similar-products-heading">Similar Products</h1>
+
         <ul className="similar-products-list">
           {similarProductsData.map(eachSimilarProduct => (
             <SimilarProductItem
@@ -208,8 +242,7 @@ const ProductItemDetails = () => {
   }
 
   const renderProductDetails = () => {
-    const {status} = apiResponse
-    switch (status) {
+    switch (apiResponse.status) {
       case apiStatusConstants.success:
         return renderProductDetailsView()
       case apiStatusConstants.failure:
